@@ -5,16 +5,13 @@ using Model;
 using Model.Config;
 using UnityEngine;
 using Utilities;
-// hello, I'm Fedor
+
 public class EnterPoint : MonoBehaviour
 {
     [SerializeField] private Settings _settings;
     [SerializeField] private Canvas _targetCanvas;
-    private float _timeScale = 1;
-    //Comment
-    /*
-     * Multi row comment
-     */
+    private float _timeScale = 5;
+
     void Start()
     {
         Time.timeScale = _timeScale;
