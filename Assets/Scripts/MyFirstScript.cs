@@ -1,24 +1,30 @@
+using PlasticPipe.PlasticProtocol.Messages;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using UnityEngine;
 
 public class MyFirstScript : MonoBehaviour
 {
-    // Start is called before the first frame update
+
     void Start()
     {
-        int x = 99;
-        int sum = 0;
-        BigInteger prod = 1;
-        for (int i = 0; i < x; i++)
+        float[] floats = { -3, -1, 0, 1.3f, 6, 3, 10, 4, 2, 5, -2 };
+        float min = float.MaxValue;
+        float max = float.MinValue; 
+        //for (int i = 0; i < floats.Length; i++)
+        //{
+        //    if (floats[i] < min) min = floats[i];
+        //    if (floats[i] > max) max = floats[i];
+        //}
+        foreach( float f in floats ) 
         {
-            sum += (i + 1);
-            prod *= (i + 1);
-            Debug.Log(prod);
+            if (f > max) max = f;
+            if (f < min) min = f;
         }
-        Debug.Log(sum);
-        Debug.Log(prod);
-        //Debug.Log((x * (x + 1) / 2));
+
+        Debug.Log(min);
+        Debug.Log(max);
     }
 }

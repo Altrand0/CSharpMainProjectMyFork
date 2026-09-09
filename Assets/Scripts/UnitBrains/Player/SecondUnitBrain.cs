@@ -28,7 +28,8 @@ namespace UnitBrains.Player
             {
                 IncreaseTemperature();//current == 0 but GetTemperature() now might be > 0
             }
-            for (int i = 0; i <= currentTemperature; i++)// 0 == 0 so true at least once (Can temperature be negative?)
+            currentTemperature = GetTemperature();
+            for (int i = 0; i < currentTemperature; i++)// 0 == 0 so true at least once (Can temperature be negative?)
             {
                 var projectile = CreateProjectile(forTarget);
                 AddProjectileToList(projectile, intoList);
@@ -47,9 +48,30 @@ namespace UnitBrains.Player
             // Homework 1.4 (1st block, 4rd module)
             ///////////////////////////////////////
             List<Vector2Int> result = GetReachableTargets();
-            while (result.Count > 1)
+            Vector2Int selectedTarget = Vector2Int.zero;
+            float minDistance = float.MaxValue;
+            bool targetFound = false;
+
+            foreach (Vector2Int target in result)
             {
-                result.RemoveAt(result.Count - 1);
+                if (DistanceToOwnBase(target) < minDistance) 
+                {
+                    minDistance = DistanceToOwnBase(target);
+                    selectedTarget = target;
+                    targetFound = true;
+                }
+            }
+            if (targetFound)
+            {
+                result.Clear();
+                result.Add(selectedTarget);
+            }
+            else
+            {
+                while (result.Count > 1)
+                {
+                    result.RemoveAt(result.Count - 1);
+                }
             }
             return result;
             ///////////////////////////////////////
