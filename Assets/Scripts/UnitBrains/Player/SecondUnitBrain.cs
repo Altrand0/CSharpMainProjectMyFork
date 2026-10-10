@@ -12,105 +12,95 @@ namespace UnitBrains.Player
 {
     public class SecondUnitBrain : DefaultPlayerUnitBrain
     {
-        public List<Vector2Int> mostDangerousTargets = new(); // Новое поле для хранения целей, к которым нужно идти, но которые вне зоны досягаемости
-        public override string TargetUnitName => "Cobra Commando";
-        private const float OverheatTemperature = 3f;
-        private const float OverheatCooldown = 2f;
-        private float _temperature = 0f;
-        private float _cooldownTime = 0f;
-        private bool _overheated;
+        public List<Vector2Int> mostDangerousTargets = new();       // Новое поле для хранения целей, к которым нужно идти, но которые вне зоны досягаемости
+        public List<Vector2Int> CurrentTargets = new();
+        public override string TargetUnitName => "Cobra Commando";  //Имя юнита
+        static public int CounterID = 0;                            // Счётчик ID
+        public int unitID = CounterID++ % MaxUnitID;                // Логика ID: юниты получают ID от 0 до 2-х
+    
+        //public int unitID = CounterID < MaxUnitID ? CounterID++ : (CounterID = 0); // Моя авторская реализация, тут сам Counter циклится, переделал выше  :D
+        const int MaxUnitID = 3;                                    // Ограничитель для ID
+        private const float OverheatTemperature = 3f;               // Для механики перегрева
+        private const float OverheatCooldown = 2f;                  // Для механики перегрева
+        private float _temperature = 0f;                            // Для механики перегрева
+        private float _cooldownTime = 0f;                           // Для механики перегрева
+        private bool _overheated;                                   // Для механики перегрева
 
-        protected override void GenerateProjectiles(Vector2Int forTarget, List<BaseProjectile> intoList)
+        
+        
+        protected override void GenerateProjectiles(Vector2Int forTarget, List<BaseProjectile> intoList) //Метод генерации снарядов юнита
         {
-            float overheatTemperature = OverheatTemperature;
+            float overheatTemperature = OverheatTemperature;    // Для механики перегрева
             ///////////////////////////////////////
             // Homework 1.3 (1st block, 3rd module)
             ///////////////////////////////////////     
-            int currentTemperature = GetTemperature();
-            if (currentTemperature >= overheatTemperature)
-            {
-                return;
-            }
-            else
-            {
-                IncreaseTemperature();
-            }
-            currentTemperature = GetTemperature();
-            for (int i = 0; i < currentTemperature; i++)
-            {
-                var projectile = CreateProjectile(forTarget);
-                AddProjectileToList(projectile, intoList);
-            }
-            ///////////////////////////////////////
+            int currentTemperature = GetTemperature();  // Для механики перегрева
+            if (currentTemperature >= overheatTemperature)  // 
+            {                                               //
+                return;                                     //
+            }                                               //
+            else                                            //
+            {                                               //
+                IncreaseTemperature();                      // Механика перегрева
+            }                                               //
+            currentTemperature = GetTemperature();          //
+            for (int i = 0; i < currentTemperature; i++)    //
+            {                                               //
+                var projectile = CreateProjectile(forTarget);//
+                AddProjectileToList(projectile, intoList);  //
+            }                                               //
+            ///////////////////////////////////////         // 
         }
 
-        public override Vector2Int GetNextStep()
+        public override Vector2Int GetNextStep() // Поиск пути
         {
             //Получить цель из списка целей
-            if ((mostDangerousTargets.Count == 0) || isReachable(mostDangerousTargets[0])) // Если цели нет либо вне области атаки
+            if ((CurrentTargets.Count == 0) || isReachable(CurrentTargets[unitID % CurrentTargets.Count])) // деления на ноль не будет, если CurrentTargets.Count равно нулю, вторая половина выражения уже не выполняется
             {
                 return unit.Pos;
             }
             else
             {
-                return unit.Pos.CalcNextStepTowards(mostDangerousTargets[0]); //Идти к следующей цели
+                return unit.Pos.CalcNextStepTowards(CurrentTargets[unitID % CurrentTargets.Count]); //Идти к следующей цели
             }            
             //return base.GetNextStep();
         }
 
-        protected override List<Vector2Int> SelectTargets()
+        protected override List<Vector2Int> SelectTargets() //Логика выбора следующей цели
         {
             ///////////////////////////////////////
             // Homework 1.4 (1st block, 4rd module)
             ///////////////////////////////////////
-
-            mostDangerousTargets.Clear();
-            List<Vector2Int> result = new List<Vector2Int>(); 
-            List<Vector2Int> allTargets = GetAllTargets().ToList<Vector2Int>(); 
-            float minDistance = float.MaxValue;
-
-            Vector2Int mostDangerousTarget = new Vector2Int(); 
-
-            
-            
-            
-
-            if (allTargets.Count > 0) 
-            {                
-                foreach (Vector2Int target in allTargets)// Проверяем все цели
+            Debug.Log(unitID);
+            CurrentTargets.Clear();                                                 // Очищаем список
+            List<Vector2Int> result = new List<Vector2Int>();                       // Новый список для найденных целей
+            CurrentTargets = GetAllTargets().ToList<Vector2Int>();                  // Заполняем новый список       
+            if (CurrentTargets.Any())                                               // Удобная функция из приложения к домашке для проверки, есть ли в списке элементы
+            {
+                SortByDistanceToOwnBase(CurrentTargets);                            //Эта функция из видео к домашке заменяет предыдущий код из поиска минимальной дистанции
+                if (isReachable(CurrentTargets[unitID % CurrentTargets.Count]))     //Проверяем что количество целей не меньше чем текущий ID 
                 {
-                    float distanceFromOwnBaseToTarget = DistanceToOwnBase(target);//Избавляемся от лишних вызовов метода, храня значение в локальной переменной
-                    if (distanceFromOwnBaseToTarget < minDistance) // Проходимся по списку вообще всех целей и ищем самые близкие
-                    {
-                        minDistance = distanceFromOwnBaseToTarget;
-                        mostDangerousTarget = target;
-                    }                    
+                    result.Add(CurrentTargets[unitID % CurrentTargets.Count]);      //Номер цели - ID юнита, если пройдёт проверку как выше^
                 }
-            }
-            else
-            {                
+                else if(isReachable(CurrentTargets[0]))
+                { 
+                    result.Add(CurrentTargets[0]);      // Если целей, совпадающих с ID не осталось, (Например id = 2, а целей две: 0-ая и 1-ая) добавляем любую ближайшую к базе
+                }
+
+            }else         //перестраховка, вдруг базы не будет среди целей
+            {
                 Vector2Int enemyBase = runtimeModel.RoMap.Bases[IsPlayerUnitBrain ? RuntimeModel.BotPlayerId : RuntimeModel.PlayerId];
-                result.Add(enemyBase);
-                return result;
-                
+                CurrentTargets.Add(enemyBase);      
             }
-            mostDangerousTargets.Add(mostDangerousTarget);// Записываем самую опасную цель в созданную коллекцию
-
-            
-            if (isReachable(mostDangerousTarget))
-            {
-                result.Add(mostDangerousTarget);//Если цель в зоне досягаемости, добавляем в result
-            }
-            //Цели всегда есть, в них есть база противника. Если она осталась одна, она и окажется mostDangerousTarget, отдельно её получать не нужно
             return result;
-
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         }
-            bool isReachable(Vector2Int target)// Сомневаюсь, что реализация подобного метода является частью задания ???
+            bool isReachable(Vector2Int target)
             {
-            List<Vector2Int> reachableTargets = GetReachableTargets();// Метод из прошлого задания, получаем все цели в зоне досягаемости
+            List<Vector2Int> reachableTargets = GetReachableTargets();//Получаем все цели в зоне досягаемости
             foreach(Vector2Int reachableTarget in reachableTargets)
                 {
-                    if (reachableTarget == target)// Если переданная цель совпадает с теми что получаем как досягаемые
+                    if (reachableTarget == target)// Если переданная цель совпадает с одной из тех что получаем как досягаемые
                     {
                         return true; // Значит она тоже досягаемая
                     }
