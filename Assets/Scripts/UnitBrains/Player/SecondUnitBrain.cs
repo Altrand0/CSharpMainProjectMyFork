@@ -17,9 +17,10 @@ namespace UnitBrains.Player
         public override string TargetUnitName => "Cobra Commando";  //Имя юнита
         static public int CounterID = 0;                            // Счётчик ID
         public int unitID = CounterID++ % MaxUnitID;                // Логика ID: юниты получают ID от 0 до 2-х
-    
+
         //public int unitID = CounterID < MaxUnitID ? CounterID++ : (CounterID = 0); // Моя авторская реализация, тут сам Counter циклится, переделал выше  :D
         const int MaxUnitID = 3;                                    // Ограничитель для ID
+        const int MaxTargets = 3;
         private const float OverheatTemperature = 3f;               // Для механики перегрева
         private const float OverheatCooldown = 2f;                  // Для механики перегрева
         private float _temperature = 0f;                            // Для механики перегрева
@@ -55,13 +56,14 @@ namespace UnitBrains.Player
         public override Vector2Int GetNextStep() // Поиск пути
         {
             //Получить цель из списка целей
-            if ((CurrentTargets.Count == 0) || isReachable(CurrentTargets[unitID % CurrentTargets.Count])) // деления на ноль не будет, если CurrentTargets.Count равно нулю, вторая половина выражения уже не выполняется
+            int enemyID = CurrentTargets.Any() ? unitID % CurrentTargets.Count : unitID;    //Вывел повторяющееся выражение в отдельную переменную
+            if ((CurrentTargets.Count == 0) || isReachable(CurrentTargets[enemyID]))        // деления на ноль не будет, если CurrentTargets.Count равно нулю, вторая половина выражения уже не выполняется
             {
                 return unit.Pos;
             }
             else
             {
-                return unit.Pos.CalcNextStepTowards(CurrentTargets[unitID % CurrentTargets.Count]); //Идти к следующей цели
+                return unit.Pos.CalcNextStepTowards(CurrentTargets[enemyID]); //Идти к следующей цели
             }            
             //return base.GetNextStep();
         }
@@ -71,27 +73,36 @@ namespace UnitBrains.Player
             ///////////////////////////////////////
             // Homework 1.4 (1st block, 4rd module)
             ///////////////////////////////////////
-            Debug.Log(unitID);
             CurrentTargets.Clear();                                                 // Очищаем список
             List<Vector2Int> result = new List<Vector2Int>();                       // Новый список для найденных целей
             CurrentTargets = GetAllTargets().ToList<Vector2Int>();                  // Заполняем новый список       
+            int enemyID = CurrentTargets.Any() ? unitID % CurrentTargets.Count : unitID;//Вывел повторяющееся выражение в отдельную переменную
+
             if (CurrentTargets.Any())                                               // Удобная функция из приложения к домашке для проверки, есть ли в списке элементы
             {
                 SortByDistanceToOwnBase(CurrentTargets);                            //Эта функция из видео к домашке заменяет предыдущий код из поиска минимальной дистанции
-                if (isReachable(CurrentTargets[unitID % CurrentTargets.Count]))     //Проверяем что количество целей не меньше чем текущий ID 
+                if (isReachable(CurrentTargets[enemyID]))   
                 {
-                    result.Add(CurrentTargets[unitID % CurrentTargets.Count]);      //Номер цели - ID юнита, если пройдёт проверку как выше^
+                    result.Add(CurrentTargets[enemyID]);                    
                 }
-                else if(isReachable(CurrentTargets[0]))
-                { 
-                    result.Add(CurrentTargets[0]);      // Если целей, совпадающих с ID не осталось, (Например id = 2, а целей две: 0-ая и 1-ая) добавляем любую ближайшую к базе
+                else
+                {               
+                        for(int i = 0; i < Math.Min(CurrentTargets.Count, MaxTargets); i++)
+                        {
+                            
+                            if (isReachable(CurrentTargets[i]))
+                            {
+                                result.Add(CurrentTargets[i]);      // Если целей, совпадающих с ID не осталось, (Например id = 2, а целей две: 0-ая и 1-ая) перебираем все оставшиеся
+                            }
+                        }
                 }
 
             }else         //перестраховка, вдруг базы не будет среди целей
             {
                 Vector2Int enemyBase = runtimeModel.RoMap.Bases[IsPlayerUnitBrain ? RuntimeModel.BotPlayerId : RuntimeModel.PlayerId];
-                CurrentTargets.Add(enemyBase);      
+                result.Add(enemyBase);      
             }
+            //Debug.Log(result.Count);
             return result;
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         }
