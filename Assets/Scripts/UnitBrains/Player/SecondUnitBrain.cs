@@ -102,7 +102,6 @@ namespace UnitBrains.Player
                 Vector2Int enemyBase = runtimeModel.RoMap.Bases[IsPlayerUnitBrain ? RuntimeModel.BotPlayerId : RuntimeModel.PlayerId];
                 result.Add(enemyBase);      
             }
-            //Debug.Log(result.Count);
             return result;
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         }
